@@ -7,6 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/compiler_flags.cmake")
 
 add_subdirectory(common)
 
@@ -21,4 +24,5 @@ foreach(exercise_source IN LISTS exercise_sources)
     cmake_path(GET exercise_source STEM exercise_name)
     add_executable(ex_${exercise_name} "${exercise_source}")
     target_link_libraries(ex_${exercise_name} PRIVATE common)
+    cpp_lab_set_warnings(ex_${exercise_name})
 endforeach()

@@ -3,3 +3,4 @@ add_library(common
 )
 
 target_include_directories(common PUBLIC include)
+cpp_lab_set_warnings(common)
