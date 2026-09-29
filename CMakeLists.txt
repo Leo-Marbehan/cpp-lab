@@ -11,6 +11,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/compiler_flags.cmake")
 
+enable_testing()
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/doctest.cmake")
+add_subdirectory(testing)
+
 add_subdirectory(common)
 
 file(GLOB project_cmakelists CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/projects/*/CMakeLists.txt")
