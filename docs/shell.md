@@ -25,6 +25,9 @@ Loading only defines the commands below; nothing runs until one is called.
 | `cppnew`   | `New-CppLabProject`    | Create `projects/<name>/` from `templates/project/`                      |
 | `cppclean` | `Remove-CppLabBuild`   | Delete build folders                                                     |
 
+Without alias: `Install-CppLabToolchain [-WhatIf]` installs the pinned toolchain on a new machine
+(see [setup.md](setup.md)).
+
 Commands using an `msvc*` preset or the `check-msvc` workflow call `vsdev` themselves.
 `vsdev` does nothing if the environment is already loaded.
 

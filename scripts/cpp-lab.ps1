@@ -144,6 +144,112 @@ function Remove-CppLabBuild {
     }
 }
 
+function Install-CppLabToolchain {
+    <#
+    .SYNOPSIS
+    Install the toolchain this repository is tested with (docs/setup.md). Use -WhatIf to see what would happen.
+    .DESCRIPTION
+    Missing tools are installed with winget at the pinned version. Tools already installed are never upgraded or
+    downgraded: a different version is only reported. Visual Studio Build Tools are installed (with .vsconfig) only when
+    no Visual Studio exists; an existing installation missing components gets the command to add them.
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
+
+    $tools = @(
+        @{ Name = 'Git'; Id = 'Git.Git'; Version = $null; Command = 'git'; Dir = "$env:ProgramFiles\Git\cmd" }
+        @{ Name = 'CMake'; Id = 'Kitware.CMake'; Version = '4.4.3'; Command = 'cmake'; Dir = "$env:ProgramFiles\CMake\bin"
+            Probe = { param($exe) (& $exe --version)[0] -replace '^cmake version ', '' } }
+        @{ Name = 'Ninja'; Id = 'Ninja-build.Ninja'; Version = '1.13.2'; Command = 'ninja'; Dir = $null
+            Probe = { param($exe) & $exe --version } }
+        @{ Name = 'LLVM'; Id = 'LLVM.LLVM'; Version = '21.1.0'; Command = 'clang'; Dir = "$env:ProgramFiles\LLVM\bin"
+            Probe = { param($exe) ((& $exe --version)[0] -split ' ')[2] } }
+        @{ Name = 'VSCode'; Id = 'Microsoft.VisualStudioCode'; Version = $null; Command = 'code'
+            Dir = "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin" }
+    )
+
+    function Update-SessionPath {
+        $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+            [Environment]::GetEnvironmentVariable('Path', 'User')
+    }
+
+    foreach ($tool in $tools) {
+        $label = if ($tool.Version) { "$($tool.Name) $($tool.Version)" } else { $tool.Name }
+
+        $exe = (Get-Command $tool.Command -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+        if (-not $exe -and $tool.Dir) {
+            $exe = Get-ChildItem $tool.Dir -Filter "$($tool.Command).*" -ErrorAction SilentlyContinue |
+                Where-Object Extension -in '.exe', '.cmd' | Select-Object -First 1 -ExpandProperty FullName
+            if ($exe -and $PSCmdlet.ShouldProcess('user PATH', "Add $($tool.Dir)")) {
+                $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+                [Environment]::SetEnvironmentVariable('Path', "$userPath;$($tool.Dir)", 'User')
+                Update-SessionPath
+            }
+        }
+
+        if ($exe) {
+            if ($tool.Version -and $tool.Probe) {
+                $found = & $tool.Probe $exe
+                if ($found -ne $tool.Version) {
+                    Write-Warning ("$($tool.Name) $found is installed; this repository is tested with $($tool.Version). " +
+                        "To match: winget install --id $($tool.Id) --exact --version $($tool.Version) --force")
+                    continue
+                }
+            }
+            Write-Host "ok        $label"
+            continue
+        }
+
+        $arguments = @('install', '--id', $tool.Id, '--exact', '--silent', '--accept-package-agreements',
+            '--accept-source-agreements')
+        if ($tool.Version) {
+            $arguments += @('--version', $tool.Version)
+        }
+        if ($PSCmdlet.ShouldProcess($label, 'winget install')) {
+            winget @arguments
+            Update-SessionPath
+            if (-not (Get-Command $tool.Command -ErrorAction SilentlyContinue) -and $tool.Dir -and (Test-Path $tool.Dir)) {
+                $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+                [Environment]::SetEnvironmentVariable('Path', "$userPath;$($tool.Dir)", 'User')
+                Update-SessionPath
+            }
+            Write-Host "installed $label"
+        }
+    }
+
+    $vsconfig = Join-Path $CppLabRoot '.vsconfig'
+    $components = (Get-Content $vsconfig -Raw | ConvertFrom-Json).components
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    $anyVs = if (Test-Path $vswhere) { & $vswhere -products * -property installationPath | Select-Object -First 1 }
+    $completeVs = if ($anyVs) { & $vswhere -products * -requires @components -property installationPath | Select-Object -First 1 }
+    if ($completeVs) {
+        Write-Host "ok        Visual Studio C++ tools ($completeVs)"
+    } elseif ($anyVs) {
+        $setup = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\setup.exe'
+        Write-Warning ("Visual Studio at '$anyVs' lacks components from .vsconfig. Add them with the Visual Studio " +
+            "Installer (More > Import configuration > .vsconfig), or from an administrator shell:`n" +
+            "  & '$setup' modify --installPath '$anyVs' --config '$vsconfig' --passive")
+    } elseif ($PSCmdlet.ShouldProcess('Visual Studio Build Tools (components from .vsconfig)', 'winget install')) {
+        winget install --id Microsoft.VisualStudio.BuildTools --exact --accept-package-agreements --accept-source-agreements `
+            --override "--wait --passive --config `"$vsconfig`""
+        Write-Host 'installed Visual Studio Build Tools'
+    }
+
+    if (Get-Command code -ErrorAction SilentlyContinue) {
+        $recommended = (Get-Content (Join-Path $CppLabRoot '.vscode\extensions.json') -Raw | ConvertFrom-Json).recommendations
+        $installed = code --list-extensions
+        foreach ($extension in $recommended) {
+            if ($installed -contains $extension) {
+                Write-Host "ok        VSCode extension $extension"
+            } elseif ($PSCmdlet.ShouldProcess("VSCode extension $extension", 'code --install-extension')) {
+                code --install-extension $extension
+            }
+        }
+    }
+
+    Write-Host 'Open a new terminal so that PATH changes apply everywhere, then: docs/setup.md, "Verify".'
+}
+
 Set-Alias -Name cppdir -Value Set-CppLabLocation
 Set-Alias -Name vsdev -Value Enter-CppLabDevShell
 Set-Alias -Name cppbuild -Value Invoke-CppLabBuild

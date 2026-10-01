@@ -19,7 +19,8 @@ scripts/       cpp-lab.ps1: shell commands (the only PowerShell script, see ADR 
 testing/       shared test main (cpp_lab_test_main)
 cmake/         compiler_flags.cmake (flags, ASan, warnings), doctest.cmake (tests), format.cmake,
                new_project.cmake (generator), generator_check.cmake (templates self-test)
-docs/          conventions.md, vscode.md, shell.md, adr/ (architecture decision records)
+docs/          setup.md, conventions.md, vscode.md, shell.md, adr/ (architecture decision records)
+.vsconfig      Visual Studio components required (used by Install-CppLabToolchain)
 ```
 
 ## Build and test
