@@ -1,0 +1,20 @@
+name: Question or suggestion
+description: Ask how something works, or suggest an improvement (pull requests aren't accepted, see CONTRIBUTING.md).
+labels: [question]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Question
+        - Suggestion
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: The question, or what you would change and why. Links to files or lines help.
+    validations:
+      required: true

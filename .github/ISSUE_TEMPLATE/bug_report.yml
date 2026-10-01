@@ -1,0 +1,25 @@
+name: Bug report
+description: Something doesn't build, a test fails, or a program gives a wrong result.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Commands, preset (`msvc-debug`, `clang-debug`, …), and the relevant output.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Windows version, Visual Studio/MSVC version, LLVM version, CMake version, commit.
+      placeholder: Windows 11, MSVC 19.51, LLVM 21.1.0, CMake 4.4.3, commit abc1234

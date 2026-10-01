@@ -21,7 +21,8 @@ cmake/         compiler_flags.cmake (flags, ASan, warnings), doctest.cmake (test
                new_project.cmake (generator), generator_check.cmake (templates self-test),
                pre_commit.cmake (git hook checks)
 .githooks/     pre-commit, commit-msg (enabled per clone with git config core.hooksPath .githooks)
-docs/          setup.md, conventions.md, vscode.md, shell.md, adr/ (architecture decision records)
+.github/       CI (workflows/ci.yml), ruleset, issue/PR templates, Dependabot (see docs/github.md)
+docs/          setup.md, conventions.md, vscode.md, shell.md, github.md, adr/ (decision records)
 .vsconfig      Visual Studio components required (used by Install-CppLabToolchain)
 ```
 
@@ -44,7 +45,11 @@ cmake --workflow --preset check-msvc # MSVC, warnings as errors + all tests (dev
 ```
 
 Before saying a change works: run `cmake --workflow --preset check` and
-`cmake --workflow --preset check-msvc`; both must pass.
+`cmake --workflow --preset check-msvc`; both must pass. CI runs the same two on every push to
+`main` and every pull request.
+
+Tool versions (CMake, Ninja, LLVM) are pinned in one place, `$CppLabPinnedTools` in
+`scripts/cpp-lab.ps1` (version, download URL, SHA-256), used locally and by CI.
 
 Shortcuts for humans: dot-source `scripts/cpp-lab.ps1` (from a PowerShell profile) for `cppdir`,
 `vsdev` (enter the developer environment), `cppbuild`, `cpptest`, `cppchk` (both check workflows),

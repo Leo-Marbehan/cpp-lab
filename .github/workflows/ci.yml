@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: check (${{ matrix.compiler }})
+    # Manual runs (workflow_dispatch) only for the repository owner.
+    if: github.event_name != 'workflow_dispatch' || github.actor == github.repository_owner
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: clang
+            workflow: check
+          - compiler: msvc
+            workflow: check-msvc
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check
+        shell: pwsh
+        run: |
+          . ./scripts/cpp-lab.ps1
+          # Developer environment first, then the pinned tools in front of Visual Studio's bundled CMake/Ninja.
+          Enter-CppLabDevShell
+          Install-CppLabPortableToolchain -Path "$env:RUNNER_TEMP\tools"
+          cmake --version
+          ninja --version
+          clang --version
+          cl 2>&1 | Select-Object -First 1
+          Invoke-CppLabCheck -Workflow ${{ matrix.workflow }}

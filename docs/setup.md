@@ -22,6 +22,9 @@ How to get from a fresh Windows machine to a passing `cppchk`. Step 3 is automat
 `cmake_minimum_required(VERSION 3.28)` and `.clang-format` options depend on these versions.
 A different clang-format version may format slightly differently.
 
+The pinned versions (with download URL and SHA-256) are defined once, in `$CppLabPinnedTools` at
+the top of `scripts/cpp-lab.ps1`; CI uses the same table.
+
 ## 1. Prerequisites
 
 - **winget** (App Installer, included in Windows 11). Check: `winget --version`.

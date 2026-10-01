@@ -49,6 +49,8 @@ The MSVC presets need the Visual Studio developer environment: run `vsdev` first
 | [docs/conventions.md](docs/conventions.md) | C++ style, naming, formatting, linting, suppressions |
 | [docs/vscode.md](docs/vscode.md) | VSCode shortcuts and command IDs |
 | [docs/shell.md](docs/shell.md) | Shell commands (`cppbuild`, `cppchk`, …) |
+| [docs/github.md](docs/github.md) | CI, ruleset and repository settings |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Issues welcome; pull requests not accepted |
 | [docs/adr/](docs/adr/) | Architecture decision records: why things are the way they are |
 | [AGENTS.md](AGENTS.md) | Rules for AI coding agents (and humans) |
 

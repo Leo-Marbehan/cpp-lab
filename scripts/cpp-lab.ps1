@@ -8,6 +8,29 @@
 
 $CppLabRoot = Split-Path -Parent $PSScriptRoot
 
+# Pinned toolchain, used by Install-CppLabToolchain (winget) and Install-CppLabPortableToolchain (CI downloads).
+# Changing a version: update the URL and SHA-256 too, and docs/setup.md (ADR 0012).
+$CppLabPinnedTools = [ordered]@{
+    CMake = @{
+        Version = '4.4.3'
+        Url = 'https://github.com/Kitware/CMake/releases/download/v4.4.3/cmake-4.4.3-windows-x86_64.zip'
+        Sha256 = '4d52ebab7193a698651639ed80d8d04fd903358843572cf44c7fd234cb7c26ab'
+        Bin = 'cmake-4.4.3-windows-x86_64\bin'
+    }
+    Ninja = @{
+        Version = '1.13.2'
+        Url = 'https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-win.zip'
+        Sha256 = '07fc8261b42b20e71d1720b39068c2e14ffcee6396b76fb7a795fb460b78dc65'
+        Bin = '.'
+    }
+    LLVM = @{
+        Version = '21.1.0'
+        Url = 'https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-win64.exe'
+        Sha256 = 'e751be8019b7500b100456c915b4b3c339d8d88b81b3aad49796d39f700e7ef3'
+        Bin = 'bin'
+    }
+}
+
 $cppLabPresetCompleter = {
     param($commandName, $parameterName, $wordToComplete)
     $presets = Get-Content (Join-Path $CppLabRoot 'CMakePresets.json') -Raw | ConvertFrom-Json
@@ -171,12 +194,12 @@ function Install-CppLabToolchain {
 
     $tools = @(
         @{ Name = 'Git'; Id = 'Git.Git'; Version = $null; Command = 'git'; Dir = "$env:ProgramFiles\Git\cmd" }
-        @{ Name = 'CMake'; Id = 'Kitware.CMake'; Version = '4.4.3'; Command = 'cmake'; Dir = "$env:ProgramFiles\CMake\bin"
-            Probe = { param($exe) (& $exe --version)[0] -replace '^cmake version ', '' } }
-        @{ Name = 'Ninja'; Id = 'Ninja-build.Ninja'; Version = '1.13.2'; Command = 'ninja'; Dir = $null
-            Probe = { param($exe) & $exe --version } }
-        @{ Name = 'LLVM'; Id = 'LLVM.LLVM'; Version = '21.1.0'; Command = 'clang'; Dir = "$env:ProgramFiles\LLVM\bin"
-            Probe = { param($exe) ((& $exe --version)[0] -split ' ')[2] } }
+        @{ Name = 'CMake'; Id = 'Kitware.CMake'; Version = $CppLabPinnedTools.CMake.Version; Command = 'cmake'
+            Dir = "$env:ProgramFiles\CMake\bin"; Probe = { param($exe) (& $exe --version)[0] -replace '^cmake version ', '' } }
+        @{ Name = 'Ninja'; Id = 'Ninja-build.Ninja'; Version = $CppLabPinnedTools.Ninja.Version; Command = 'ninja'
+            Dir = $null; Probe = { param($exe) & $exe --version } }
+        @{ Name = 'LLVM'; Id = 'LLVM.LLVM'; Version = $CppLabPinnedTools.LLVM.Version; Command = 'clang'
+            Dir = "$env:ProgramFiles\LLVM\bin"; Probe = { param($exe) ((& $exe --version)[0] -split ' ')[2] } }
         @{ Name = 'VSCode'; Id = 'Microsoft.VisualStudioCode'; Version = $null; Command = 'code'
             Dir = "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin" }
     )
@@ -261,6 +284,139 @@ function Install-CppLabToolchain {
     }
 
     Write-Host 'Open a new terminal so that PATH changes apply everywhere, then: docs/setup.md, "Verify".'
+}
+
+function Install-CppLabPortableToolchain {
+    <#
+    .SYNOPSIS
+    Download the pinned CMake, Ninja and LLVM into a folder and put them first on PATH. Used by CI.
+    .DESCRIPTION
+    No installation and no administrator rights: archives are extracted (LLVM's installer with 7-Zip). Every download
+    is checked against its pinned SHA-256. In GitHub Actions, the folders are also added to GITHUB_PATH for later steps.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [ValidateSet('CMake', 'Ninja', 'LLVM')][string[]]$Tool = @('CMake', 'Ninja', 'LLVM')
+    )
+    New-Item -ItemType Directory -Force $Path | Out-Null
+    $previousProgress = $ProgressPreference
+    $ProgressPreference = 'SilentlyContinue'
+    try {
+        foreach ($name in $Tool) {
+            $pinned = $CppLabPinnedTools[$name]
+            $archive = Join-Path $Path (Split-Path -Leaf $pinned.Url)
+            $destination = Join-Path $Path $name.ToLower()
+            Invoke-WebRequest -Uri $pinned.Url -OutFile $archive -UseBasicParsing
+            $hash = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLower()
+            if ($hash -ne $pinned.Sha256) {
+                throw "$name download has SHA-256 $hash, expected $($pinned.Sha256)."
+            }
+            if ($archive -like '*.zip') {
+                Expand-Archive -Path $archive -DestinationPath $destination -Force
+            } else {
+                $sevenZip = (Get-Command 7z -ErrorAction SilentlyContinue).Source ?? "$env:ProgramFiles\7-Zip\7z.exe"
+                if (-not (Test-Path $sevenZip)) {
+                    throw '7-Zip is needed to extract the LLVM installer.'
+                }
+                & $sevenZip x $archive "-o$destination" -y | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    throw "7-Zip failed to extract $archive."
+                }
+            }
+            Remove-Item $archive
+            $bin = (Resolve-Path (Join-Path $destination $pinned.Bin)).Path
+            $env:Path = "$bin;$env:Path"
+            if ($env:GITHUB_PATH) {
+                Add-Content -Path $env:GITHUB_PATH -Value $bin
+            }
+            Write-Host "$name $($pinned.Version) -> $bin"
+        }
+    } finally {
+        $ProgressPreference = $previousProgress
+    }
+}
+
+function Set-CppLabGitHubSettings {
+    <#
+    .SYNOPSIS
+    Apply the repository settings described in docs/github.md with the GitHub CLI (gh). Use -WhatIf to preview.
+    .DESCRIPTION
+    Safe to run again: settings are set to the same values, the ruleset from .github/rulesets/main.json is created
+    or updated by name. Needs `gh auth login` with admin rights on the repository.
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        # owner/name; default: the repository of the current clone's remote.
+        [string]$Repository
+    )
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+        throw 'GitHub CLI (gh) not found: winget install --id GitHub.cli --exact'
+    }
+    if (-not $Repository) {
+        Push-Location $CppLabRoot
+        try {
+            $Repository = gh repo view --json nameWithOwner --jq .nameWithOwner
+        } finally {
+            Pop-Location
+        }
+        if (-not $Repository) {
+            throw 'No GitHub repository found for this clone; pass -Repository owner/name.'
+        }
+    }
+
+    $steps = @(
+        @{ What = 'features: issues on; wiki, projects, discussions off'
+            Args = @('repo', 'edit', $Repository, '--enable-issues', '--enable-wiki=false', '--enable-projects=false',
+                '--enable-discussions=false') }
+        @{ What = 'pull requests: squash and rebase merges only, delete branches after merge, no auto-merge'
+            Args = @('repo', 'edit', $Repository, '--enable-squash-merge', '--enable-rebase-merge',
+                '--enable-merge-commit=false', '--delete-branch-on-merge', '--enable-auto-merge=false') }
+        @{ What = 'description and topics'
+            Args = @('repo', 'edit', $Repository, '--description',
+                'Personal C++20 practice monorepo: CMake presets, MSVC + clang, clang-tidy, doctest',
+                '--add-topic', 'cpp', '--add-topic', 'cpp20', '--add-topic', 'cmake', '--add-topic', 'clang-tidy') }
+        @{ What = 'secret scanning and push protection'
+            Args = @('repo', 'edit', $Repository, '--enable-secret-scanning', '--enable-secret-scanning-push-protection') }
+        @{ What = 'private vulnerability reporting'
+            Args = @('api', '--method', 'PUT', "repos/$Repository/private-vulnerability-reporting") }
+        @{ What = 'Dependabot alerts'
+            Args = @('api', '--method', 'PUT', "repos/$Repository/vulnerability-alerts") }
+        @{ What = 'Dependabot security updates'
+            Args = @('api', '--method', 'PUT', "repos/$Repository/automated-security-fixes") }
+        @{ What = 'Actions: read-only GITHUB_TOKEN, cannot approve pull requests'
+            Args = @('api', '--method', 'PUT', "repos/$Repository/actions/permissions/workflow",
+                '-f', 'default_workflow_permissions=read', '-F', 'can_approve_pull_request_reviews=false') }
+        @{ What = 'Actions: approval required for workflows from all outside contributors'
+            Args = @('api', '--method', 'PUT', "repos/$Repository/actions/permissions/fork-pr-contributor-approval",
+                '-f', 'approval_policy=all_external_contributors') }
+    )
+
+    foreach ($step in $steps) {
+        if ($PSCmdlet.ShouldProcess($Repository, $step.What)) {
+            gh @($step.Args) | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                Write-Warning "Failed: $($step.What). Set it by hand (docs/github.md)."
+            } else {
+                Write-Host "set       $($step.What)"
+            }
+        }
+    }
+
+    $rulesetFile = Join-Path $CppLabRoot '.github\rulesets\main.json'
+    $rulesetName = (Get-Content $rulesetFile -Raw | ConvertFrom-Json).name
+    if ($PSCmdlet.ShouldProcess($Repository, "ruleset '$rulesetName' from .github/rulesets/main.json")) {
+        $existing = gh api "repos/$Repository/rulesets" --jq ".[] | select(.name == `"$rulesetName`") | .id"
+        if ($existing) {
+            gh api --method PUT "repos/$Repository/rulesets/$existing" --input $rulesetFile | Out-Null
+        } else {
+            gh api --method POST "repos/$Repository/rulesets" --input $rulesetFile | Out-Null
+        }
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Failed: ruleset '$rulesetName'. Import it by hand (docs/github.md)."
+        } else {
+            Write-Host "set       ruleset '$rulesetName'"
+        }
+    }
 }
 
 Set-Alias -Name cppdir -Value Set-CppLabLocation

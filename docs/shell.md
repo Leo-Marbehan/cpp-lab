@@ -25,9 +25,14 @@ Loading only defines the commands below; nothing runs until one is called.
 | `cppnew`   | `New-CppLabProject`    | Create `projects/<name>/` from `templates/project/`                      |
 | `cppclean` | `Remove-CppLabBuild`   | Delete build folders                                                     |
 
-Without alias, used once per machine or clone (see [setup.md](setup.md)):
-`Install-CppLabToolchain [-WhatIf]` installs the pinned toolchain; `Enable-CppLabGitHooks` turns on
-the commit checks of `.githooks/`.
+Without alias, used rarely:
+
+| Function | Does |
+| -------- | ---- |
+| `Install-CppLabToolchain [-WhatIf]` | Install the pinned toolchain on a new machine ([setup.md](setup.md)) |
+| `Enable-CppLabGitHooks` | Turn on the commit checks of `.githooks/` in this clone |
+| `Install-CppLabPortableToolchain -Path <dir>` | Download the pinned CMake, Ninja, LLVM into a folder, first on `PATH` (used by CI) |
+| `Set-CppLabGitHubSettings [-Repository <owner/name>] [-WhatIf]` | Apply the GitHub settings of [github.md](github.md) with `gh` |
 
 Commands using an `msvc*` preset or the `check-msvc` workflow call `vsdev` themselves.
 `vsdev` does nothing if the environment is already loaded.
