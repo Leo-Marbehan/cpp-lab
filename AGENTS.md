@@ -1,0 +1,81 @@
+# AGENTS.md
+
+Instructions for AI coding agents (and humans) working in this repository.
+
+## Project
+
+A personal C++20 monorepo for practicing C++: single-file programs in `playground/`, projects,
+and shared code in `common/`.
+Windows only, CMake + Ninja, MSVC (main) and clang (second compiler), VSCode.
+
+## Layout
+
+```text
+common/        static library `common`: include/common/*.hpp, src/, tests/
+playground/    every *.cpp (subfolders included) is its own executable pg_<path>, linked to common
+projects/      every <name>/ with a CMakeLists.txt is added automatically
+testing/       shared test main (cpp_lab_test_main)
+cmake/         compiler_flags.cmake (flags, ASan, warnings), doctest.cmake (tests)
+docs/          conventions.md, adr/ (architecture decision records)
+```
+
+## Build and test
+
+MSVC presets need the Visual Studio developer environment (`Launch-VsDevShell.ps1 -Arch amd64
+-HostArch amd64`, or "Developer PowerShell for VS 2026"). VSCode's CMake Tools sets it up by
+itself. The clang presets also work from a plain shell.
+
+```powershell
+cmake --list-presets                 # msvc-debug, msvc-release, msvc-asan, clang-debug, clang-release
+cmake --preset msvc-debug            # configure  → build/msvc-debug/
+cmake --build --preset msvc-debug    # build      → executables in build/msvc-debug/bin/
+ctest --preset msvc-debug            # test
+```
+
+Before saying a change works: build it and run the tests, with at least one MSVC and one clang
+preset when the change touches compiler-specific code or flags.
+
+## Adding code
+
+- **Single-file program:** add `playground/[<folder>/…]<name>.cpp` with a `main`. Nothing else;
+  `playground/math/primes.cpp` becomes `pg_math_primes`. Each `.cpp` is a separate program, so
+  helpers shared inside a folder must be headers (`.hpp`). Anything bigger is a project.
+- **Project:** add `projects/<name>/CMakeLists.txt`. Call `cpp_lab_set_warnings(<target>)` for
+  each target it defines, and link `common` if needed.
+- **Tests:** `cpp_lab_add_tests(<target> <sources…>)`, then link the library under test with
+  `target_link_libraries(<target> PRIVATE <lib>)`. Test files are named `test_<topic>.cpp`.
+- **Shared code:** move code into `common/` only once it is needed in at least two places.
+  `common/CMakeLists.txt` lists its sources explicitly.
+- **Dependencies:** none without an ADR. Fetch with `FetchContent`, pinned by URL + SHA256.
+
+## Where knowledge goes
+
+| What                                                 | Where              |
+| ---------------------------------------------------- | ------------------ |
+| Why the _current_ code is non-obvious                | Short code comment |
+| Why a change was made                                | Commit message     |
+| Decisions with lasting impact, alternatives, history | ADR in `docs/adr/` |
+| Old code                                             | Git history        |
+
+- **No comments** narrating decisions, history, or "changed from …/previously …".
+- **No comments** restating what the code obviously does.
+- Tooling, build and dependency changes get an ADR (`docs/adr/0000-template.md`). ADRs are never
+  rewritten: a changed decision gets a new ADR, and the old one is marked
+  `Superseded by NNNN`.
+
+## Code style
+
+Follow [docs/conventions.md](docs/conventions.md).
+
+## Public repository
+
+This repository is public.
+
+- Don't describe planned or unimplemented projects in any committed file (code, examples, docs,
+  ADRs, test data, commit messages). A project is mentioned once it exists in `projects/`.
+- No personal machine details (user folders, machine names) in committed files.
+
+## Git
+
+- **Never stage, unstage or commit** (`git add`, `git reset`, `git commit`, …) unless explicitly instructed to do so. Read-only commands (`status`, `diff`, `log`) are fine.
+- Don't add entries to `.gitignore` unless asked; it grows by hand as needs appear.
