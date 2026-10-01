@@ -13,6 +13,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/compiler_flags.cmake")
 
 enable_testing()
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/doctest.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/format.cmake")
 add_subdirectory(testing)
 
 add_subdirectory(common)

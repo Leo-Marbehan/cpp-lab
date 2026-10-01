@@ -5,6 +5,7 @@ FetchContent_Declare(doctest
     URL_HASH SHA256=174ebc4e769928959614789c5b4e9c3d0a0f81a62bb608756b127bfebfb21331
     SYSTEM
 )
+set(DOCTEST_WITH_MAIN_IN_STATIC_LIB OFF)
 FetchContent_MakeAvailable(doctest)
 
 include("${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake")

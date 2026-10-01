@@ -1,0 +1,5 @@
+# Single-file programs: an exception escaping main() is acceptable (std::terminate reports it),
+# a try/catch in every file is not worth it. Projects keep the check.
+InheritParentConfig: true
+Checks: >
+  -bugprone-exception-escape

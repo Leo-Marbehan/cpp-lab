@@ -3,10 +3,13 @@
 #include <iostream>
 
 int main() {
-    for (int n = 0; n < 50; ++n) {
-        if (common::is_prime(n)) {
-            std::cout << n << ' ';
-        }
+  constexpr int limit = 50;
+
+  for (int n = 0; n < limit; ++n) {
+    if (common::is_prime(n)) {
+      std::cout << n << ' ';
     }
-    std::cout << '\n';
+  }
+
+  std::cout << '\n';
 }

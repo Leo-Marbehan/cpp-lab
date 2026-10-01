@@ -1,7 +1,34 @@
 # C++ conventions
 
-Formatting details (indentation, braces, line length) will be enforced by `.clang-format`.
-Until then, follow the existing code: 4-space indentation, opening braces on the same line.
+## Formatting and linting
+
+- Formatting is automatic: `.clang-format` (LLVM-based, 2-space indent, 120 columns), applied on
+  save in VSCode, or with `cmake --build --preset <p> --target format`. Don't format by hand.
+- `.clang-tidy` checks bugs, modern C++, performance, readability and the naming rules below.
+  Findings show in the editor; `cmake --workflow --preset lint` / `check` fail on any of them.
+- `ctest` includes a `format_check` test: unformatted files fail the test run.
+
+### Suppressing a finding
+
+Fix the code when possible. When a finding is wrong for a specific case, suppress it as
+narrowly as possible, **naming the check and giving the reason**:
+
+```cpp
+// NOLINTNEXTLINE(readability-identifier-naming): the name is fixed by doctest.
+#define DOCTEST_CONFIG_IMPLEMENT
+```
+
+| Scope                 | Form                                                                        |
+| --------------------- | --------------------------------------------------------------------------- |
+| One line              | `// NOLINT(check-name): reason` at the end of the line                      |
+| The next line         | `// NOLINTNEXTLINE(check-name): reason` on the line above                   |
+| A block               | `// NOLINTBEGIN(check-name): reason` … `// NOLINTEND(check-name)`           |
+| A folder              | `.clang-tidy` in the folder: `InheritParentConfig: true` + `Checks: '-check-name'`, with a comment |
+| Formatting of a block | `// clang-format off` … `// clang-format on` (e.g. a hand-aligned table)    |
+| MSVC warning          | `#pragma warning(suppress: NNNN)` on the line above                         |
+| clang warning         | `#pragma clang diagnostic push` / `ignored "-Wname"` / `pop`                |
+
+Never a bare `// NOLINT` without a check name.
 
 ## Files
 
@@ -9,6 +36,8 @@ Until then, follow the existing code: 4-space indentation, opening braces on the
 - `snake_case` file names: `csv_reader.hpp`, `csv_reader.cpp`.
 - A header and its source share the name; one main class or topic per header.
 - `#pragma once` in every header.
+- Include what you use: include the header of every standard or library symbol the file uses,
+  even if another include already brings it in (`misc-include-cleaner`).
 - Tests: `tests/test_<topic>.cpp`.
 
 ## Includes
@@ -49,6 +78,21 @@ types are `PascalCase`.
 - Read-only parameters: `std::string_view`, `std::span`, or `const&` for other non-trivial types.
 - `const` by default; `[[nodiscard]]` on functions whose result must not be ignored.
 - `enum class`, not plain `enum`.
+- No magic numbers, tests included: name them (`constexpr int limit = 50;`). Lists of test
+  values go in a `constexpr std::array`, checked in a loop with `CAPTURE(value)`.
+- Project `main` functions don't let exceptions escape. Wrap the body in `common::run_main`
+  (`<common/run_main.hpp>`): any exception is printed as `error: <message>` on stderr and
+  becomes `EXIT_FAILURE`. The body returns an exit code or nothing (`EXIT_SUCCESS`).
+
+  ```cpp
+  int main() {
+    return common::run_main([] {
+      // ...
+    });
+  }
+  ```
+
+  Playground programs may use it but don't have to (`playground/.clang-tidy`).
 - Fixed-width integers (`std::int64_t`) when the range matters.
 - Prefer standard algorithms and ranges over hand-written loops when they are clearer.
 - Randomness: seed explicitly, make the seed configurable and print it, so any run can be

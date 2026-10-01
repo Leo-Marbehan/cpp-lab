@@ -2,28 +2,36 @@
 
 #include <doctest/doctest.h>
 
+#include <array>
 #include <cstdint>
 #include <limits>
 
 TEST_CASE("is_prime: values below 2 are not prime") {
-    CHECK_FALSE(common::is_prime(-7));
-    CHECK_FALSE(common::is_prime(0));
-    CHECK_FALSE(common::is_prime(1));
+  constexpr std::array<std::int64_t, 3> values{-7, 0, 1};
+  for (const std::int64_t n : values) {
+    CAPTURE(n);
+    CHECK_FALSE(common::is_prime(n));
+  }
 }
 
 TEST_CASE("is_prime: small numbers") {
-    CHECK(common::is_prime(2));
-    CHECK(common::is_prime(3));
-    CHECK_FALSE(common::is_prime(4));
-    CHECK(common::is_prime(5));
-    CHECK_FALSE(common::is_prime(9));
-    CHECK_FALSE(common::is_prime(25));
-    CHECK(common::is_prime(97));
+  constexpr std::array<std::int64_t, 5> primes{2, 3, 5, 7, 97};
+  constexpr std::array<std::int64_t, 5> composites{4, 6, 9, 25, 91};
+  for (const std::int64_t n : primes) {
+    CAPTURE(n);
+    CHECK(common::is_prime(n));
+  }
+  for (const std::int64_t n : composites) {
+    CAPTURE(n);
+    CHECK_FALSE(common::is_prime(n));
+  }
 }
 
 TEST_CASE("is_prime: large numbers") {
-    CHECK(common::is_prime(2'147'483'647));
-    CHECK(common::is_prime(1'000'000'007));
-    CHECK_FALSE(common::is_prime(1'000'000'007LL * 3));
-    CHECK_FALSE(common::is_prime(std::numeric_limits<std::int64_t>::max()));
+  constexpr std::int64_t mersenne_prime_31 = 2'147'483'647;
+  constexpr std::int64_t prime_1e9_plus_7 = 1'000'000'007;
+  CHECK(common::is_prime(mersenne_prime_31));
+  CHECK(common::is_prime(prime_1e9_plus_7));
+  CHECK_FALSE(common::is_prime(prime_1e9_plus_7 * 3));
+  CHECK_FALSE(common::is_prime(std::numeric_limits<std::int64_t>::max()));
 }

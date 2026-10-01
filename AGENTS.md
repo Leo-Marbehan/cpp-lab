@@ -15,8 +15,8 @@ common/        static library `common`: include/common/*.hpp, src/, tests/
 playground/    every *.cpp (subfolders included) is its own executable pg_<path>, linked to common
 projects/      every <name>/ with a CMakeLists.txt is added automatically
 testing/       shared test main (cpp_lab_test_main)
-cmake/         compiler_flags.cmake (flags, ASan, warnings), doctest.cmake (tests)
-docs/          conventions.md, adr/ (architecture decision records)
+cmake/         compiler_flags.cmake (flags, ASan, warnings), doctest.cmake (tests), format.cmake
+docs/          conventions.md, vscode.md, adr/ (architecture decision records)
 ```
 
 ## Build and test
@@ -26,14 +26,23 @@ MSVC presets need the Visual Studio developer environment (`Launch-VsDevShell.ps
 itself. The clang presets also work from a plain shell.
 
 ```powershell
-cmake --list-presets                 # msvc-debug, msvc-release, msvc-asan, clang-debug, clang-release
+cmake --list-presets=all             # configure, build, test and workflow presets
 cmake --preset msvc-debug            # configure  → build/msvc-debug/
 cmake --build --preset msvc-debug    # build      → executables in build/msvc-debug/bin/
-ctest --preset msvc-debug            # test
+ctest --preset msvc-debug            # test (includes format_check)
+cmake --build --preset clang-debug --target format   # format every C++ file
+
+cmake --workflow --preset lint       # clang-tidy + warnings as errors + formatting
+cmake --workflow --preset check      # same + all tests (clang)
+cmake --workflow --preset check-msvc # MSVC, warnings as errors + all tests (developer environment)
 ```
 
-Before saying a change works: build it and run the tests, with at least one MSVC and one clang
-preset when the change touches compiler-specific code or flags.
+Before saying a change works: run `cmake --workflow --preset check` and
+`cmake --workflow --preset check-msvc`; both must pass.
+
+Fix clang-tidy findings rather than silencing them. When a suppression is justified, name the
+check and give the reason (`// NOLINTNEXTLINE(check-name): reason`); never a bare `// NOLINT`.
+See `docs/conventions.md`.
 
 ## Adding code
 
@@ -41,7 +50,8 @@ preset when the change touches compiler-specific code or flags.
   `playground/math/primes.cpp` becomes `pg_math_primes`. Each `.cpp` is a separate program, so
   helpers shared inside a folder must be headers (`.hpp`). Anything bigger is a project.
 - **Project:** add `projects/<name>/CMakeLists.txt`. Call `cpp_lab_set_warnings(<target>)` for
-  each target it defines, and link `common` if needed.
+  each target it defines, and link `common` if needed. Its `main` wraps its body in
+  `common::run_main` (see `docs/conventions.md`).
 - **Tests:** `cpp_lab_add_tests(<target> <sources…>)`, then link the library under test with
   `target_link_libraries(<target> PRIVATE <lib>)`. Test files are named `test_<topic>.cpp`.
 - **Shared code:** move code into `common/` only once it is needed in at least two places.

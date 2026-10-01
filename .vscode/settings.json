@@ -13,10 +13,10 @@
 
   "[cpp]": {
     "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
-    // Off until .clang-format exists (step 8), otherwise clangd applies the LLVM default style.
-    "editor.formatOnSave": false
+    "editor.formatOnSave": true
   },
 
+  "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
   "files.watcherExclude": {

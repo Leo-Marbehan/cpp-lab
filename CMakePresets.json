@@ -78,6 +78,23 @@
       "name": "clang-release",
       "displayName": "Clang Release",
       "inherits": ["clang", "release"]
+    },
+    {
+      "name": "clang-check",
+      "displayName": "Clang Debug, strict: clang-tidy and warnings as errors",
+      "inherits": "clang-debug",
+      "cacheVariables": {
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--warnings-as-errors=*",
+        "CMAKE_COMPILE_WARNING_AS_ERROR": "ON"
+      }
+    },
+    {
+      "name": "msvc-check",
+      "displayName": "MSVC Debug, strict: warnings as errors",
+      "inherits": "msvc-debug",
+      "cacheVariables": {
+        "CMAKE_COMPILE_WARNING_AS_ERROR": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -85,7 +102,9 @@
     { "name": "msvc-release", "configurePreset": "msvc-release" },
     { "name": "msvc-asan", "configurePreset": "msvc-asan" },
     { "name": "clang-debug", "configurePreset": "clang-debug" },
-    { "name": "clang-release", "configurePreset": "clang-release" }
+    { "name": "clang-release", "configurePreset": "clang-release" },
+    { "name": "clang-check", "configurePreset": "clang-check" },
+    { "name": "msvc-check", "configurePreset": "msvc-check" }
   ],
   "testPresets": [
     {
@@ -99,6 +118,47 @@
     { "name": "msvc-release", "inherits": "base", "configurePreset": "msvc-release" },
     { "name": "msvc-asan", "inherits": "base", "configurePreset": "msvc-asan" },
     { "name": "clang-debug", "inherits": "base", "configurePreset": "clang-debug" },
-    { "name": "clang-release", "inherits": "base", "configurePreset": "clang-release" }
+    { "name": "clang-release", "inherits": "base", "configurePreset": "clang-release" },
+    { "name": "clang-check", "inherits": "base", "configurePreset": "clang-check" },
+    {
+      "name": "clang-check-format",
+      "inherits": "base",
+      "configurePreset": "clang-check",
+      "filter": {
+        "include": {
+          "name": "^format_check$"
+        }
+      }
+    },
+    { "name": "msvc-check", "inherits": "base", "configurePreset": "msvc-check" }
+  ],
+  "workflowPresets": [
+    {
+      "name": "lint",
+      "displayName": "clang-tidy, warnings as errors, formatting (no unit tests)",
+      "steps": [
+        { "type": "configure", "name": "clang-check" },
+        { "type": "build", "name": "clang-check" },
+        { "type": "test", "name": "clang-check-format" }
+      ]
+    },
+    {
+      "name": "check",
+      "displayName": "lint + all tests (clang)",
+      "steps": [
+        { "type": "configure", "name": "clang-check" },
+        { "type": "build", "name": "clang-check" },
+        { "type": "test", "name": "clang-check" }
+      ]
+    },
+    {
+      "name": "check-msvc",
+      "displayName": "MSVC warnings as errors + all tests",
+      "steps": [
+        { "type": "configure", "name": "msvc-check" },
+        { "type": "build", "name": "msvc-check" },
+        { "type": "test", "name": "msvc-check" }
+      ]
+    }
   ]
 }

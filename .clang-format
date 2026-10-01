@@ -1,0 +1,19 @@
+BasedOnStyle: LLVM
+IndentWidth: 2
+ColumnLimit: 120
+PointerAlignment: Left
+InsertBraces: true
+AllowShortFunctionsOnASingleLine: Empty
+FixNamespaceComments: true
+
+IncludeBlocks: Regroup
+MainIncludeChar: Any
+IncludeCategories:
+  - Regex: '^"'
+    Priority: 2
+  - Regex: '^<common/'
+    Priority: 3
+  - Regex: '^<[^/]*>$'
+    Priority: 5
+  - Regex: '.*'
+    Priority: 4
