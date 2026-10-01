@@ -1,0 +1,9 @@
+#pragma once
+
+#include <string>
+
+namespace @NAME@ {
+
+[[nodiscard]] std::string greeting();
+
+} // namespace @NAME@

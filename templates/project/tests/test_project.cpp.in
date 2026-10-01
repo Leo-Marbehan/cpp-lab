@@ -1,0 +1,7 @@
+#include "@NAME@/@NAME@.hpp"
+
+#include <doctest/doctest.h>
+
+TEST_CASE("@NAME@: greeting names the project") {
+  CHECK(@NAME@::greeting() == "Hello from @NAME@");
+}

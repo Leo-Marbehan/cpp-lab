@@ -1,0 +1,11 @@
+#include "@NAME@/@NAME@.hpp"
+
+#include <string>
+
+namespace @NAME@ {
+
+std::string greeting() {
+  return "Hello from @NAME@";
+}
+
+} // namespace @NAME@

@@ -85,7 +85,8 @@
       "inherits": "clang-debug",
       "cacheVariables": {
         "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--warnings-as-errors=*",
-        "CMAKE_COMPILE_WARNING_AS_ERROR": "ON"
+        "CMAKE_COMPILE_WARNING_AS_ERROR": "ON",
+        "CPP_LAB_CHECK_GENERATOR": "ON"
       }
     },
     {
@@ -93,7 +94,8 @@
       "displayName": "MSVC Debug, strict: warnings as errors",
       "inherits": "msvc-debug",
       "cacheVariables": {
-        "CMAKE_COMPILE_WARNING_AS_ERROR": "ON"
+        "CMAKE_COMPILE_WARNING_AS_ERROR": "ON",
+        "CPP_LAB_CHECK_GENERATOR": "ON"
       }
     }
   ],
@@ -126,7 +128,7 @@
       "configurePreset": "clang-check",
       "filter": {
         "include": {
-          "name": "^format_check$"
+          "name": "^format_check"
         }
       }
     },

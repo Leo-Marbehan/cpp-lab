@@ -1,0 +1,23 @@
+# @NAME@
+
+<!-- What this project is, in one or two sentences. -->
+
+## Build, run, test
+
+```powershell
+cmake --preset msvc-debug
+cmake --build --preset msvc-debug --target @NAME@
+.\build\msvc-debug\bin\@NAME@.exe
+ctest --preset msvc-debug -R "^@NAME@:"
+```
+
+## Layout
+
+| Path                      | Content                                                        |
+| ------------------------- | -------------------------------------------------------------- |
+| `include/@NAME@/`         | Public headers of the library `@NAME@_lib`                     |
+| `src/`                    | Library code, and `main.cpp` for the executable `@NAME@`       |
+| `tests/`                  | doctest tests (`@NAME@_tests`)                                 |
+| `docs/adr/`               | Decisions specific to this project, created with the first one |
+
+ADRs use the repository template, [`docs/adr/0000-template.md`](../../docs/adr/0000-template.md).

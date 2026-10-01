@@ -1,0 +1,14 @@
+add_library(@NAME@_lib
+    src/@NAME@.cpp
+)
+target_include_directories(@NAME@_lib PUBLIC include)
+cpp_lab_set_warnings(@NAME@_lib)
+
+add_executable(@NAME@ src/main.cpp)
+target_link_libraries(@NAME@ PRIVATE @NAME@_lib common)
+cpp_lab_set_warnings(@NAME@)
+
+cpp_lab_add_tests(@NAME@_tests
+    tests/test_@NAME@.cpp
+)
+target_link_libraries(@NAME@_tests PRIVATE @NAME@_lib)

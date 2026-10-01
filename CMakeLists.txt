@@ -34,3 +34,8 @@ foreach(playground_source IN LISTS playground_sources)
     target_link_libraries(${playground_target} PRIVATE common)
     cpp_lab_set_warnings(${playground_target})
 endforeach()
+
+option(CPP_LAB_CHECK_GENERATOR "Generate a project from templates/ and build it (check presets)" OFF)
+if(CPP_LAB_CHECK_GENERATOR)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/generator_check.cmake")
+endif()

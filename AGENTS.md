@@ -14,8 +14,10 @@ Windows only, CMake + Ninja, MSVC (main) and clang (second compiler), VSCode.
 common/        static library `common`: include/common/*.hpp, src/, tests/
 playground/    every *.cpp (subfolders included) is its own executable pg_<path>, linked to common
 projects/      every <name>/ with a CMakeLists.txt is added automatically
+templates/     project templates used by cmake/new_project.cmake
 testing/       shared test main (cpp_lab_test_main)
-cmake/         compiler_flags.cmake (flags, ASan, warnings), doctest.cmake (tests), format.cmake
+cmake/         compiler_flags.cmake (flags, ASan, warnings), doctest.cmake (tests), format.cmake,
+               new_project.cmake (generator), generator_check.cmake (templates self-test)
 docs/          conventions.md, vscode.md, adr/ (architecture decision records)
 ```
 
@@ -49,9 +51,11 @@ See `docs/conventions.md`.
 - **Single-file program:** add `playground/[<folder>/…]<name>.cpp` with a `main`. Nothing else;
   `playground/math/primes.cpp` becomes `pg_math_primes`. Each `.cpp` is a separate program, so
   helpers shared inside a folder must be headers (`.hpp`). Anything bigger is a project.
-- **Project:** add `projects/<name>/CMakeLists.txt`. Call `cpp_lab_set_warnings(<target>)` for
-  each target it defines, and link `common` if needed. Its `main` wraps its body in
-  `common::run_main` (see `docs/conventions.md`).
+- **Project:** generate it, never copy another one: `cmake -DNAME=<snake_case> -P
+  cmake/new_project.cmake`. It creates `<name>_lib` (library), `<name>` (executable whose `main`
+  wraps its body in `common::run_main`) and `<name>_tests`, plus a `README.md`. Every target added
+  later calls `cpp_lab_set_warnings(<target>)`. To change what new projects look like, edit
+  `templates/project/`; the check workflows build a project generated from it.
 - **Tests:** `cpp_lab_add_tests(<target> <sources…>)`, then link the library under test with
   `target_link_libraries(<target> PRIVATE <lib>)`. Test files are named `test_<topic>.cpp`.
 - **Shared code:** move code into `common/` only once it is needed in at least two places.
@@ -72,6 +76,15 @@ See `docs/conventions.md`.
 - Tooling, build and dependency changes get an ADR (`docs/adr/0000-template.md`). ADRs are never
   rewritten: a changed decision gets a new ADR, and the old one is marked
   `Superseded by NNNN`.
+- ADRs exist at two levels, same template and rules:
+
+  | A decision about…                                                   | Goes in                     |
+  | ------------------------------------------------------------------- | --------------------------- |
+  | one project's code, design or algorithms                            | `projects/<name>/docs/adr/` |
+  | the build, tooling, `common/`, the conventions, or several projects | `docs/adr/`                 |
+
+  If the ADR would mean nothing once the project is deleted, it belongs to the project. Project
+  ADRs are numbered per project; the folder is created with the first one.
 
 ## Code style
 

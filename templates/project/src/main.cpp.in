@@ -1,0 +1,9 @@
+#include "@NAME@/@NAME@.hpp"
+
+#include <common/run_main.hpp>
+
+#include <iostream>
+
+int main() {
+  return common::run_main([] { std::cout << @NAME@::greeting() << '\n'; });
+}
