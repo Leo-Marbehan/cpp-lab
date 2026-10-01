@@ -1,0 +1,3 @@
+#!/bin/sh
+# Logic in cmake/pre_commit.cmake.
+exec cmake -P "$(git rev-parse --show-toplevel)/cmake/pre_commit.cmake"

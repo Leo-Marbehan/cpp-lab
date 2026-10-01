@@ -144,6 +144,19 @@ function Remove-CppLabBuild {
     }
 }
 
+function Enable-CppLabGitHooks {
+    <#
+    .SYNOPSIS
+    Use the repository's git hooks (.githooks/: pre-commit, commit-msg) in this clone. Needed once per clone.
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
+    if ($PSCmdlet.ShouldProcess($CppLabRoot, 'git config core.hooksPath .githooks')) {
+        git -C $CppLabRoot config core.hooksPath .githooks
+        Write-Host 'Git hooks enabled (.githooks/). Private word list: .git/info/forbidden-words (one per line).'
+    }
+}
+
 function Install-CppLabToolchain {
     <#
     .SYNOPSIS

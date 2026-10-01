@@ -18,7 +18,9 @@ templates/     project templates used by cmake/new_project.cmake
 scripts/       cpp-lab.ps1: shell commands (the only PowerShell script, see ADR 0008)
 testing/       shared test main (cpp_lab_test_main)
 cmake/         compiler_flags.cmake (flags, ASan, warnings), doctest.cmake (tests), format.cmake,
-               new_project.cmake (generator), generator_check.cmake (templates self-test)
+               new_project.cmake (generator), generator_check.cmake (templates self-test),
+               pre_commit.cmake (git hook checks)
+.githooks/     pre-commit, commit-msg (enabled per clone with git config core.hooksPath .githooks)
 docs/          setup.md, conventions.md, vscode.md, shell.md, adr/ (architecture decision records)
 .vsconfig      Visual Studio components required (used by Install-CppLabToolchain)
 ```
@@ -109,3 +111,6 @@ This repository is public.
 
 - **Never stage, unstage or commit** (`git add`, `git reset`, `git commit`, …) unless explicitly instructed to do so. Read-only commands (`status`, `diff`, `log`) are fine.
 - Don't add entries to `.gitignore` unless asked; it grows by hand as needs appear.
+- Commits go through the hooks in `.githooks/` (formatting, personal paths, machine name, a private
+  word list). When committing on request, never bypass them (`--no-verify`) unless explicitly
+  told to; fix the finding instead.

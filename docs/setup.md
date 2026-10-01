@@ -1,7 +1,7 @@
 # Machine setup
 
-How to get from a fresh Windows machine to a passing `cppchk`. Everything after step 2 is
-automated or checked by `Install-CppLabToolchain`.
+How to get from a fresh Windows machine to a passing `cppchk`. Step 3 is automated by
+`Install-CppLabToolchain`, step 4 by `Enable-CppLabGitHooks`.
 
 ## Tested versions
 
@@ -66,7 +66,18 @@ Install-CppLabToolchain
 
 Then **open a new terminal** so every program sees the new `PATH`.
 
-## 4. Shell commands (optional)
+## 4. Git hooks
+
+```powershell
+Enable-CppLabGitHooks             # git config core.hooksPath .githooks
+```
+
+Every commit then checks its staged changes: C++ formatting, no personal path (`<drive>:\Users\<name>\…`), no
+machine name, and no word from an optional private list, `.git/info/forbidden-words` (one word or
+phrase per line; inside `.git/`, so never committed). The commit message is checked against the
+same list. Skip once with `git commit --no-verify`.
+
+## 5. Shell commands (optional)
 
 Add to your PowerShell profile (`code $PROFILE`):
 
@@ -76,7 +87,7 @@ Add to your PowerShell profile (`code $PROFILE`):
 
 Commands: [docs/shell.md](shell.md).
 
-## 5. VSCode
+## 6. VSCode
 
 1. Open the repository folder. Accept the recommended extensions if asked.
 2. CMake Tools configures automatically; pick the `msvc-debug` configure preset.
@@ -84,7 +95,7 @@ Commands: [docs/shell.md](shell.md).
 
 Shortcuts: [docs/vscode.md](vscode.md).
 
-## 6. Verify
+## 7. Verify
 
 ```powershell
 cppchk                                     # or, without the shell commands:
