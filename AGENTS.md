@@ -15,10 +15,11 @@ common/        static library `common`: include/common/*.hpp, src/, tests/
 playground/    every *.cpp (subfolders included) is its own executable pg_<path>, linked to common
 projects/      every <name>/ with a CMakeLists.txt is added automatically
 templates/     project templates used by cmake/new_project.cmake
+scripts/       cpp-lab.ps1: shell commands (the only PowerShell script, see ADR 0008)
 testing/       shared test main (cpp_lab_test_main)
 cmake/         compiler_flags.cmake (flags, ASan, warnings), doctest.cmake (tests), format.cmake,
                new_project.cmake (generator), generator_check.cmake (templates self-test)
-docs/          conventions.md, vscode.md, adr/ (architecture decision records)
+docs/          conventions.md, vscode.md, shell.md, adr/ (architecture decision records)
 ```
 
 ## Build and test
@@ -41,6 +42,11 @@ cmake --workflow --preset check-msvc # MSVC, warnings as errors + all tests (dev
 
 Before saying a change works: run `cmake --workflow --preset check` and
 `cmake --workflow --preset check-msvc`; both must pass.
+
+Shortcuts for humans: dot-source `scripts/cpp-lab.ps1` (from a PowerShell profile) for `cppdir`,
+`vsdev` (enter the developer environment), `cppbuild`, `cpptest`, `cppchk` (both check workflows),
+`cppnew`, `cppclean` (see `docs/shell.md`). They only wrap the commands above. Keep that script small: anything with
+real logic is written in C++ or CMake, not PowerShell.
 
 Fix clang-tidy findings rather than silencing them. When a suppression is justified, name the
 check and give the reason (`// NOLINTNEXTLINE(check-name): reason`); never a bare `// NOLINT`.
