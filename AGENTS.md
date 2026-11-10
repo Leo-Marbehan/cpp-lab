@@ -23,6 +23,7 @@ cmake/         compiler_flags.cmake (flags, ASan, warnings), doctest.cmake (test
 .githooks/     pre-commit, commit-msg (enabled per clone with git config core.hooksPath .githooks)
 .github/       CI (workflows/ci.yml), ruleset, issue/PR templates, Dependabot (see docs/github.md)
 docs/          setup.md, conventions.md, vscode.md, shell.md, github.md, adr/ (decision records)
+local/         git-ignored scratch: quick tests, work-in-progress docs, anything not to be tracked
 .vsconfig      Visual Studio components required (used by Install-CppLabToolchain)
 ```
 
