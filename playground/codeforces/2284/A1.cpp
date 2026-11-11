@@ -40,4 +40,6 @@ int main() {
       std::cout << r * (r + 1) << '\n';
     }
   }
+
+  return 0;
 }
