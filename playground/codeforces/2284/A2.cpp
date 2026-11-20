@@ -1,5 +1,5 @@
 /**
- * // https://codeforces.com/problemset/problem/2284/A2
+ * https://codeforces.com/problemset/problem/2284/A2
  *
  * Three points A, B and C are placed at the origin.
  *

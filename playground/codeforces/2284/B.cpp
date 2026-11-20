@@ -1,5 +1,5 @@
 /**
- * // https://codeforces.com/problemset/problem/2284/B
+ * https://codeforces.com/problemset/problem/2284/B
  *
  * n planned donations with amounts a_1, a_2, ..., a_n
  *
